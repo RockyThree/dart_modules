@@ -1,14 +1,12 @@
-// You have generated a new plugin project without specifying the `--platforms`
-// flag. A plugin project with no platform support was generated. To add a
-// platform, run `flutter create -t plugin --platforms <platforms> .` under the
-// same directory. You can also find a detailed instruction on how to add
-// platforms in the `pubspec.yaml` at
-// https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
+library video_trimmer;
 
-import 'trimmer_platform_interface.dart';
-
-class Trimmer {
-  Future<String?> getPlatformVersion() {
-    return TrimmerPlatform.instance.getPlatformVersion();
-  }
-}
+export 'package:trimmer/src/trimmer.dart';
+export 'package:trimmer/src/video_viewer.dart';
+export 'package:trimmer/src/utils/duration_style.dart';
+export 'package:trimmer/src/utils/file_formats.dart';
+export 'package:trimmer/src/utils/storage_dir.dart';
+export 'package:trimmer/src/trim_viewer/trim_editor_properties.dart';
+export 'package:trimmer/src/trim_viewer/trim_area_properties.dart';
+// Two types of trim viewers, the `TrimViewer` class helps to auto select
+// based on the length.
+export 'package:trimmer/src/trim_viewer/trim_viewer.dart';

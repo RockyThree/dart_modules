@@ -11,6 +11,11 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
+  media_kit: ^1.1.10                             # Primary package.
+  media_kit_video: ^1.2.4                        # For video rendering.
+  media_kit_libs_video: ^1.0.4                   # Native video dependencies.
+  intl: ^0.19.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
