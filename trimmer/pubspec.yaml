@@ -22,3 +22,5 @@ flutter:
     platforms:
       some_platform:
         pluginClass: somePluginClass
+      windows:
+        pluginClass: TrimmerPluginCApi

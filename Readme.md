@@ -4,4 +4,7 @@
 # 如何为lib添加平台支持
 ```bash
 flutter create --platforms=windows,macos,linux .
+flutter create --platforms=windows .
+
+flutter create -t plugin --platforms windows .
 ```
