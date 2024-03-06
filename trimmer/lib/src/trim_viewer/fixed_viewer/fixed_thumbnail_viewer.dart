@@ -2,6 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:trimmer/transparent_image.dart';
+
+import '../../video_thumbnail.dart';
 
 class FixedThumbnailViewer extends StatelessWidget {
   final File videoFile;

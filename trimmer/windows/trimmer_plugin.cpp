@@ -13,6 +13,9 @@
 #include <memory>
 #include <sstream>
 
+#include <libavcodec/version.h>
+
+
 namespace trimmer {
 
 // static
@@ -50,6 +53,12 @@ void TrimmerPlugin::HandleMethodCall(
     } else if (IsWindows7OrGreater()) {
       version_stream << "7";
     }
+    version_stream << "LIBAVCODEC_VERSION " << LIBAVCODEC_VERSION;
+    result->Success(flutter::EncodableValue(version_stream.str()));
+  } else if (method_call.method_name().compare("file") == 0) {
+    std::ostringstream version_stream;
+    version_stream << "Windows ";
+    version_stream << LIBAVCODEC_VERSION;
     result->Success(flutter::EncodableValue(version_stream.str()));
   } else {
     result->NotImplemented();

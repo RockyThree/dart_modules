@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'trimmer.dart';
 
 class VideoViewer extends StatefulWidget {
@@ -48,7 +50,7 @@ class VideoViewer extends StatefulWidget {
 class _VideoViewerState extends State<VideoViewer> {
   /// Quick access to VideoPlayerController, only not null after [TrimmerEvent.initialized]
   /// has been emitted.
-  VideoPlayerController? get videoPlayerController => widget.trimmer.videoPlayerController;
+  Player? get videoPlayer => widget.trimmer.videoPlayer;
 
   @override
   void initState() {
@@ -63,29 +65,35 @@ class _VideoViewerState extends State<VideoViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = videoPlayerController;
+    final controller = videoPlayer;
     return controller == null
         ? Container()
         : Padding(
             padding: const EdgeInsets.all(0.0),
             child: Center(
               child: AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: controller.value.isInitialized
-                    ? Container(
+                aspectRatio: controller.state.rate,
+                child: FutureBuilder(
+                  future: controller.platform!.waitForPlayerInitialization,
+                  builder: (context, snapshot) {
+                    if (controller.platform!.isVideoControllerAttached) {
+                      return Container(
                         foregroundDecoration: BoxDecoration(
                           border: Border.all(
                             width: widget.borderWidth,
                             color: widget.borderColor,
                           ),
                         ),
-                        child: VideoPlayer(controller),
-                      )
-                    : const Center(
-                        child: CircularProgressIndicator(
-                          backgroundColor: Colors.white,
-                        ),
+                        child: Video(controller: VideoController(controller)),
+                      );
+                    }
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        backgroundColor: Colors.white,
                       ),
+                    );
+                  },
+                ),
               ),
             ),
           );

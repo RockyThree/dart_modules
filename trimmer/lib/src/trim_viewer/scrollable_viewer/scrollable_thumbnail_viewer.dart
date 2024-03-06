@@ -2,8 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:transparent_image/transparent_image.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+
+import '../../../transparent_image.dart';
+import '../../video_thumbnail.dart';
 
 class ScrollableThumbnailViewer extends StatelessWidget {
   final File videoFile;

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'trimmer_method_channel.dart';
@@ -24,6 +25,10 @@ abstract class TrimmerPlatform extends PlatformInterface {
   }
 
   Future<String?> getPlatformVersion() {
+    throw UnimplementedError('platformVersion() has not been implemented.');
+  }
+
+  MethodChannel get channel {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
 }

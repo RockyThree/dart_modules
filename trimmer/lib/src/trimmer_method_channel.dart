@@ -14,4 +14,9 @@ class MethodChannelTrimmer extends TrimmerPlatform {
     final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
     return version;
   }
+
+  @override
+  MethodChannel get channel {
+    return methodChannel;
+  }
 }
