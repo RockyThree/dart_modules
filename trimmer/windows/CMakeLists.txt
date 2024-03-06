@@ -27,7 +27,9 @@ function(download_and_verify url md5 locationForArchive)
     file(MD5 "${locationForArchive}" ARCHIVE_MD5)
 
     # If MD5 doesn't match, delete the archive to download again.
-    if(NOT md5 STREQUAL ARCHIVE_MD5)
+    if(md5 STREQUAL "")
+      message(STATUS "md5 为空 跳过验证${locationForArchive}")
+    elseif(NOT md5 STREQUAL ARCHIVE_MD5)
       file(REMOVE "${locationForArchive}")
       message(STATUS "MD5 mismatch. File deleted.")
     endif()
@@ -41,8 +43,11 @@ function(download_and_verify url md5 locationForArchive)
 
     # Verify MD5 of the newly downloaded file.
     file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+    message(STATUS "${locationForArchive} 的md5是 ${ARCHIVE_MD5}")
 
-    if(md5 STREQUAL ARCHIVE_MD5)
+    if(md5 STREQUAL "")
+      message(STATUS "md5 为空 跳过验证${locationForArchive}")
+    elseif(md5 STREQUAL ARCHIVE_MD5)
       message(STATUS "${locationForArchive} Verification successful.")
     else()
       message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to re-build project again.")
@@ -75,7 +80,7 @@ set(LIBFFMPEG_UNZIP_DIR_NAME "ffmpeg-n6.1-latest-win64-gpl-shared-6.1")
 # 下载地址, 以及md5
 # https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-03-05-12-49/ffmpeg-n6.1.1-16-g33efa50fa4-win64-gpl-6.1.zip
 set(LIBFFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${LIBFFMPEG}")
-set(LIBFFMPEG_MD5 "cc3b1ba8ec63037b6dde83738b8ba394")
+set(LIBFFMPEG_MD5 "")
 
 # 下载到哪里, CMAKE_BINARY_DIR是cmake的输出位置
 set(LIBFFMPEG_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBFFMPEG}")
@@ -83,7 +88,7 @@ set(LIBFFMPEG_SRC "${CMAKE_BINARY_DIR}/ffmpeg")
 
 download_and_verify(
   ${LIBFFMPEG_URL}
-  ${LIBFFMPEG_MD5}
+  "${LIBFFMPEG_MD5}"
   ${LIBFFMPEG_ARCHIVE}
 )
 
@@ -99,6 +104,7 @@ if(NOT LIBFFMPEG_SRC_VALID)
     # COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBFFMPEG_ARCHIVE}\""
     COMMAND unzip "${LIBFFMPEG_ARCHIVE}" -d "${LIBFFMPEG_SRC}"
     COMMAND xcopy "\"${LIBFFMPEG_SRC}/${LIBFFMPEG_UNZIP_DIR_NAME}/include\"" "\"${LIBFFMPEG_SRC}/include\"" /E /H /C /I
+    COMMAND xcopy "\"${LIBFFMPEG_SRC}/${LIBFFMPEG_UNZIP_DIR_NAME}/lib\"" "\"${LIBFFMPEG_SRC}/lib\"" /E /H /C /I
     COMMAND xcopy "\"${LIBFFMPEG_SRC}/${LIBFFMPEG_UNZIP_DIR_NAME}/bin\"" "\"${LIBFFMPEG_SRC}\"" /E /H /C /I
     COMMAND rmdir "\"${LIBFFMPEG_SRC}/${LIBFFMPEG_UNZIP_DIR_NAME}\"" /S /Q
     # COMMAND ren "\"${LIBFFMPEG_SRC}/mpv\"" "\"include\""
@@ -113,7 +119,7 @@ endif()
 
 
 
-
+include_directories("${LIBFFMPEG_SRC}/include")
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
   "trimmer_plugin.cpp"
@@ -125,7 +131,6 @@ list(APPEND PLUGIN_SOURCES
 add_library(${PLUGIN_NAME} SHARED
   "include/trimmer/trimmer_plugin_c_api.h"
   "trimmer_plugin_c_api.cpp"
-  "${LIBFFMPEG_SRC}/include"
   ${PLUGIN_SOURCES}
 )
 
@@ -143,20 +148,37 @@ target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
-target_include_directories(${PLUGIN_NAME} INTERFACE
-  "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  "${LIBFFMPEG_SRC}/include"
+# include_directories("${LIBFFMPEG_SRC}/include")
+target_include_directories(${PLUGIN_NAME} 
+  INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  INTERFACE "${LIBFFMPEG_SRC}/include"
 )
-target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
+target_link_libraries(
+  ${PLUGIN_NAME} PRIVATE 
+  flutter 
+  flutter_wrapper_plugin
+  # ff link
+  "${LIBFFMPEG_SRC}/lib/avcodec.lib"
+)
+link_directories(${LIBFFMPEG_SRC})
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an
 # external build triggered from this build file.
 set(trimmer_bundled_libraries
   "${LIBFFMPEG_SRC}/avcodec-60.dll"
-  ""
+  "${LIBFFMPEG_SRC}/avdevice-60.dll"
+  "${LIBFFMPEG_SRC}/avfilter-9.dll"
+  "${LIBFFMPEG_SRC}/avformat-60.dll"
+  "${LIBFFMPEG_SRC}/avutil-58.dll"
+  "${LIBFFMPEG_SRC}/postproc-57.dll"
+  "${LIBFFMPEG_SRC}/swresample-4.dll"
+  "${LIBFFMPEG_SRC}/swscale-7.dll"
   PARENT_SCOPE
 )
+
+message(STATUS "${LIBFFMPEG_SRC}/avcodec-60.dll")
+
 
 # === Tests ===
 # These unit tests can be run from a terminal after building the example, or

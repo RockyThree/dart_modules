@@ -13,56 +13,84 @@
 #include <memory>
 #include <sstream>
 
-#include <libavcodec/version.h>
-
-
-namespace trimmer {
-
-// static
-void TrimmerPlugin::RegisterWithRegistrar(
-    flutter::PluginRegistrarWindows *registrar) {
-  auto channel =
-      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          registrar->messenger(), "trimmer",
-          &flutter::StandardMethodCodec::GetInstance());
-
-  auto plugin = std::make_unique<TrimmerPlugin>();
-
-  channel->SetMethodCallHandler(
-      [plugin_pointer = plugin.get()](const auto &call, auto result) {
-        plugin_pointer->HandleMethodCall(call, std::move(result));
-      });
-
-  registrar->AddPlugin(std::move(plugin));
+#pragma warning(disable : 4244 4819)
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/imgutils.h>
+#include <libavformat/avio.h>
+#include <libavutil/opt.h>
+#include <libswscale/swscale.h>
+#include <libavutil/avutil.h>
+#include <libavutil/error.h>
+#include <libavutil/mathematics.h>
 }
 
-TrimmerPlugin::TrimmerPlugin() {}
+namespace trimmer
+{
 
-TrimmerPlugin::~TrimmerPlugin() {}
+  // static
+  void TrimmerPlugin::RegisterWithRegistrar(
+      flutter::PluginRegistrarWindows *registrar)
+  {
+    auto channel =
+        std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+            registrar->messenger(), "trimmer",
+            &flutter::StandardMethodCodec::GetInstance());
 
-void TrimmerPlugin::HandleMethodCall(
-    const flutter::MethodCall<flutter::EncodableValue> &method_call,
-    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (method_call.method_name().compare("getPlatformVersion") == 0) {
-    std::ostringstream version_stream;
-    version_stream << "Windows ";
-    if (IsWindows10OrGreater()) {
-      version_stream << "10+";
-    } else if (IsWindows8OrGreater()) {
-      version_stream << "8";
-    } else if (IsWindows7OrGreater()) {
-      version_stream << "7";
-    }
-    version_stream << "LIBAVCODEC_VERSION " << LIBAVCODEC_VERSION;
-    result->Success(flutter::EncodableValue(version_stream.str()));
-  } else if (method_call.method_name().compare("file") == 0) {
-    std::ostringstream version_stream;
-    version_stream << "Windows ";
-    version_stream << LIBAVCODEC_VERSION;
-    result->Success(flutter::EncodableValue(version_stream.str()));
-  } else {
-    result->NotImplemented();
+    auto plugin = std::make_unique<TrimmerPlugin>();
+
+    channel->SetMethodCallHandler(
+        [plugin_pointer = plugin.get()](const auto &call, auto result)
+        {
+          plugin_pointer->HandleMethodCall(call, std::move(result));
+        });
+
+    registrar->AddPlugin(std::move(plugin));
   }
-}
 
-}  // namespace trimmer
+  TrimmerPlugin::TrimmerPlugin() {}
+
+  TrimmerPlugin::~TrimmerPlugin() {}
+
+  void TrimmerPlugin::HandleMethodCall(
+      const flutter::MethodCall<flutter::EncodableValue> &method_call,
+      std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result)
+  {
+    if (method_call.method_name().compare("getPlatformVersion") == 0)
+    {
+      std::ostringstream version_stream;
+      version_stream << "Windows ";
+      if (IsWindows10OrGreater())
+      {
+        version_stream << "10+";
+      }
+      else if (IsWindows8OrGreater())
+      {
+        version_stream << "8";
+      }
+      else if (IsWindows7OrGreater())
+      {
+        version_stream << "7";
+      }
+      version_stream << " LIBAVCODEC_VERSION ";
+      unsigned codecVer = avcodec_version();
+      version_stream << "" << codecVer << "";
+      // version_stream << LIBAVCODEC_VERSION  << " / ";
+      result->Success(flutter::EncodableValue(version_stream.str()));
+    }
+    else if (method_call.method_name().compare("file") == 0)
+    {
+      std::ostringstream version_stream;
+      // version_stream << "Windows ";
+      // version_stream << std::show(LIBAVCODEC_VERSION);
+      result->Success(flutter::EncodableValue(version_stream.str()));
+    }
+    else
+    {
+      result->NotImplemented();
+    }
+  }
+
+} // namespace trimmer

@@ -1,15 +1,15 @@
+import 'package:flutter/src/services/platform_channel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trimmer/trimmer.dart';
-import 'package:trimmer/trimmer_platform_interface.dart';
-import 'package:trimmer/trimmer_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-class MockTrimmerPlatform
-    with MockPlatformInterfaceMixin
-    implements TrimmerPlatform {
-
+class MockTrimmerPlatform with MockPlatformInterfaceMixin implements TrimmerPlatform {
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
+
+  @override
+  // TODO: implement channel
+  MethodChannel get channel => throw UnimplementedError();
 }
 
 void main() {
