@@ -13,3 +13,4 @@ export 'package:trimmer/src/trim_viewer/trim_viewer.dart';
 
 export 'package:trimmer/src/trimmer_method_channel.dart';
 export 'package:trimmer/src/trimmer_platform_interface.dart';
+export 'package:trimmer/src/video_thumbnail.dart';

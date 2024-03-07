@@ -122,15 +122,17 @@ endif()
 include_directories("${LIBFFMPEG_SRC}/include")
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
-  "trimmer_plugin.cpp"
-  "trimmer_plugin.h"
+  "src/trimmer_plugin.cpp"
+  "src/trimmer_plugin.h"
+  "src/ffmpeg/VideoDecoder.cpp"
+  "src/ffmpeg/VideoDecoder.h"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
   "include/trimmer/trimmer_plugin_c_api.h"
-  "trimmer_plugin_c_api.cpp"
+  "src/trimmer_plugin_c_api.cpp"
   ${PLUGIN_SOURCES}
 )
 
@@ -160,6 +162,13 @@ target_link_libraries(
   flutter_wrapper_plugin
   # ff link
   "${LIBFFMPEG_SRC}/lib/avcodec.lib"
+  "${LIBFFMPEG_SRC}/lib/avdevice.lib"
+  "${LIBFFMPEG_SRC}/lib/avfilter.lib"
+  "${LIBFFMPEG_SRC}/lib/avformat.lib"
+  "${LIBFFMPEG_SRC}/lib/avutil.lib"
+  "${LIBFFMPEG_SRC}/lib/postproc.lib"
+  "${LIBFFMPEG_SRC}/lib/swresample.lib"
+  "${LIBFFMPEG_SRC}/lib/swscale.lib"
 )
 link_directories(${LIBFFMPEG_SRC})
 # List of absolute paths to libraries that should be bundled with the plugin.
