@@ -8,7 +8,7 @@
 #include <string>
 #include <variant>
 
-#include "trimmer_plugin.h"
+#include "src/trimmer_plugin.h"
 
 namespace trimmer {
 namespace test {

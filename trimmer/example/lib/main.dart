@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:trimmer/trimmer.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   runApp(const MyApp());
@@ -15,6 +19,14 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+Future<File> copyAssetToTemporaryFile(String assetPath) async {
+  final byteData = await rootBundle.load(assetPath);
+  final file = File('${(await getTemporaryDirectory()).path}/temp_video.mp4');
+  await file.writeAsBytes(byteData.buffer.asUint8List());
+  print(file.path);
+  return file;
+}
+
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _trimmerPlugin = Trimmer();
@@ -23,6 +35,16 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+
+    () async {
+      var videoFile = await copyAssetToTemporaryFile('assets/Butterfly-209.mp4');
+      VideoThumbnail.saveFrameToFile(
+        videoPath: videoFile.path,
+        frameIndex: 2,
+        frameSavedDirPath: p.join((await getTemporaryDirectory()).path, '45345354345.png'),
+      );
+      // exit(0);
+    }();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -31,8 +53,7 @@ class _MyAppState extends State<MyApp> {
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      platformVersion =
-          await _trimmerPlugin.getPlatformVersion() ?? 'Unknown platform version';
+      platformVersion = await _trimmerPlugin.getPlatformVersion() ?? 'Unknown platform version';
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }

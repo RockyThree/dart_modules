@@ -53,4 +53,19 @@ class VideoThumbnail {
     };
     return await TrimmerPlatform.instance.channel.invokeMethod('data', reqMap);
   }
+
+  static Future<bool> saveFrameToFile({
+    required String videoPath,
+    required String frameSavedDirPath,
+    int frameIndex = 0,
+  }) async {
+    assert(videoPath.isNotEmpty);
+    assert(frameSavedDirPath.isNotEmpty);
+    final reqMap = <String, dynamic>{
+      'videoPath': videoPath,
+      'frameIndex': frameIndex,
+      'frameSavedDirPath': frameSavedDirPath,
+    };
+    return await TrimmerPlatform.instance.channel.invokeMethod('saveFrameToFile', reqMap);
+  }
 }
