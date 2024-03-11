@@ -123,7 +123,7 @@ list(APPEND PLUGIN_SOURCES
   "src/trimmer_plugin.h"
   "src/ffmpeg/VideoDecoder.cpp"
   "src/ffmpeg/VideoDecoder.h"
-  "src/ffmpeg/FrameExtractor.cpp"
+  "src/ffmpeg/VideoDecoderManager.cpp"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment

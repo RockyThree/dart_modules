@@ -5,167 +5,111 @@
 
 #pragma warning(disable : 4819 4996)
 
-VideoDecoder::VideoDecoder(const std::string &inputFilename, const std::string &outputPrefix) : inputFilename(inputFilename), outputPrefix(outputPrefix) {}
+VideoDecoder::VideoDecoder(const std::string &inputFilePath) : inputFilePath(inputFilePath) {}
 
 bool VideoDecoder::initialize()
 {
-    // Find the MPEG-1 video decoder
-    codec = avcodec_find_decoder(AV_CODEC_ID_MPEG1VIDEO);
+    // 打开文件, 获取格式ctx
+    if (avformat_open_input(&formatContext, inputFilePath.c_str(), nullptr, nullptr) < 0)
+    {
+        std::cerr << "Error opening input file" << std::endl;
+        return false;
+    }
+    if (avformat_find_stream_info(formatContext, nullptr) < 0)
+    {
+        std::cerr << "Error finding stream info" << std::endl;
+        return false;
+    }
+    // 根据格式ctx查找视频所在的index
+    for (unsigned int i = 0; i < formatContext->nb_streams; i++)
+    {
+        if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+        {
+            videoStreamIndex = i;
+            break;
+        }
+    }
+    if (videoStreamIndex == -1)
+    {
+        std::cerr << "Could not find video stream" << std::endl;
+        return false;
+    }
+
+    codec = const_cast<AVCodec *>(avcodec_find_decoder(formatContext->streams[videoStreamIndex]->codecpar->codec_id));
     if (!codec)
     {
-        std::cerr << "Codec not found\n";
+        std::cerr << "Unsupported codec" << std::endl;
         return false;
     }
 
-    parser = av_parser_init(codec->id);
-    if (!parser)
-    {
-        std::cerr << "Parser not found\n";
-        return false;
-    }
-
+    // #region 提取解码器信息, 创建解码器对象
     codecContext = avcodec_alloc_context3(codec);
     if (!codecContext)
     {
-        std::cerr << "Could not allocate video codec context\n";
+        std::cerr << "Failed to allocate codec context" << std::endl;
         return false;
     }
 
-    // Open codec
+    if (avcodec_parameters_to_context(codecContext, formatContext->streams[videoStreamIndex]->codecpar) < 0)
+    {
+        std::cerr << "Failed to copy codec parameters to codec context" << std::endl;
+        return false;
+    }
+
     if (avcodec_open2(codecContext, codec, nullptr) < 0)
     {
-        std::cerr << "Could not open codec\n";
+        std::cerr << "Failed to open codec" << std::endl;
         return false;
     }
+    // #endregion
 
-    std::locale loc("");
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    // inputFile.open(converter.from_bytes(inputFilename), std::ios::binary | std::ios::ate);
-    inputFile.open(converter.from_bytes(inputFilename), std::ios::binary);
-    inputFile.seekg(0, std::ios::beg);
-    if (!inputFile.is_open())
-    {
-        std::cerr << "Could not open " << inputFilename << "\n";
-        return false;
-    }
+    // 申请frame的内存空间
 
     frame = av_frame_alloc();
     if (!frame)
     {
-        std::cerr << "Could not allocate video frame\n";
+        std::cerr << "Failed to allocate frame" << std::endl;
+        return false;
+    }
+
+    frameRGB = av_frame_alloc();
+    if (!frameRGB)
+    {
+        std::cerr << "Failed to allocate RGB frame" << std::endl;
+        return false;
+    }
+
+    // 通过传入图像的像素格式（pix_fmt）、宽度（width）、高度（height）以及对齐方式（align），来计算所需的缓冲区大小（以字节为单位）
+    // 配合av_image_fill_arrays, 填充基本value
+    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, codecContext->width, codecContext->height, 1);
+    buffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
+    av_image_fill_arrays(frameRGB->data, frameRGB->linesize, buffer, AV_PIX_FMT_RGB24, codecContext->width, codecContext->height, 1);
+
+    // av_log_set_level(AV_LOG_DEBUG);
+    // 格式转换器, 源(宽,高,编码), 目标,
+    // SWS_BILINEAR：用于图像缩放的算法，这里指定为双线性插值，
+    // nullptr, nullptr, nullptr：这三个参数分别是源图像的调色板、目标图像的调色板和特殊选项，
+    swsContext = sws_getContext(codecContext->width, codecContext->height, codecContext->pix_fmt, codecContext->width, codecContext->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+
+    // log_codec_context_details(codecContext, "codecContext");
+    if (!swsContext)
+    {
+        std::cerr << "Failed to create SwsContext" << std::endl;
         return false;
     }
 
     return true;
 }
 
-void VideoDecoder::saveFrames()
-{
-    uint8_t inbuf[INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
-    uint8_t *data;
-    size_t data_size;
-    int ret;
-    int eof;
-    AVPacket *pkt = av_packet_alloc();
-
-    if (!pkt)
-    {
-        std::cerr << "Error allocating packet\n";
-        return;
-    }
-
-    /* Set end of buffer to 0 (this ensures that no overreading happens for damaged MPEG streams) */
-    memset(inbuf + INBUF_SIZE, 0, AV_INPUT_BUFFER_PADDING_SIZE);
-
-    do
-    {
-
-        // Read raw data from the input file
-        inputFile.read(reinterpret_cast<char *>(inbuf), INBUF_SIZE);
-        // inputFile.read(reinterpret_cast<wchar_t*>(inbuf), INBUF_SIZE);
-        data_size = inputFile.gcount();
-        eof = inputFile.eof();
-
-        // std::cerr << "data_size " << data_size << "\n";
-        // std::cerr << "eof " << eof << "\n";
-
-        // Use the parser to split the data into frames
-        data = inbuf;
-        while (data_size > 0 || eof)
-        {
-            ret = av_parser_parse2(parser, codecContext, &pkt->data, &pkt->size,
-                                   data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
-            if (ret < 0)
-            {
-                std::cerr << "Error while parsing\n";
-                return;
-            }
-            data += ret;
-            data_size -= ret;
-
-            if (pkt->size)
-                decodeFrame(pkt);
-            else if (eof)
-                break;
-        }
-    } while (!eof);
-
-    // Flush the decoder
-    decodeFrame(nullptr);
-
-    av_packet_free(&pkt);
-}
-
 VideoDecoder::~VideoDecoder()
 {
-    av_parser_close(parser);
-    avcodec_free_context(&codecContext);
-    av_frame_free(&frame);
-    inputFile.close();
 }
 
-void VideoDecoder::decodeFrame(AVPacket *pkt)
+void VideoDecoder::extractFrame(int frameNumber, const std::string &outputPath)
 {
-    char buf[1024];
-    int ret;
-
-    std::cerr << "pkt->size " << pkt->size << "\n";
-    ret = avcodec_send_packet(codecContext, pkt);
-    if (ret < 0)
-    {
-        std::cerr << "Error sending a packet for decoding\n";
-        return;
-    }
-
-    while (ret >= 0)
-    {
-        ret = avcodec_receive_frame(codecContext, frame);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-            return;
-        else if (ret < 0)
-        {
-            std::cerr << "Error during decoding\n";
-            return;
-        }
-
-        std::string filename = outputPrefix + std::to_string(frameCount++);
-        std::cout << "filename: " << filename << std::endl;
-        snprintf(buf, sizeof(buf), "%s.pgm", filename.c_str());
-        pgm_save(frame->data[0], frame->linesize[0], frame->width, frame->height, buf);
-    }
-}
-
-void VideoDecoder::pgm_save(unsigned char *buf, int wrap, int xsize, int ysize, const char *filename)
-{
-    std::ofstream f(filename, std::ios::binary);
-    if (!f)
-    {
-        std::cerr << "Error opening file " << filename << " for writing\n";
-        return;
-    }
-    f << "P5\n"
-      << xsize << " " << ysize << "\n"
-      << 255 << "\n";
-    for (int i = 0; i < ysize; i++)
-        f.write(reinterpret_cast<char *>(buf + i * wrap), xsize);
+    // 假设要定位到第10帧
+    int64_t frameIndex = frameNumber;
+    AVStream *videoStream = formatContext->streams[videoStreamIndex];
+    int64_t timestamp = av_rescale_q(frameIndex, videoStream->time_base, AV_TIME_BASE_Q);
+    av_seek_frame(formatContext, videoStreamIndex, timestamp, AVSEEK_FLAG_BACKWARD);
 }
