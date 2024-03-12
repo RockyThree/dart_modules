@@ -37,11 +37,9 @@ class FixedThumbnailViewer extends StatelessWidget {
     for (int i = 1; i <= numberOfThumbnails; i++) {
       Uint8List? bytes;
       try {
-        bytes = await VideoThumbnail.thumbnailData(
-          video: videoPath,
-          imageFormat: ImageFormat.JPEG,
-          timeMs: (eachPart * i).toInt(),
-          quality: quality,
+        bytes = await VideoThumbnail.thumbnailWebpData(
+          videoPath: videoPath,
+          frameIndex: (eachPart * i).toInt(),
         );
       } catch (e) {
         debugPrint('ERROR: Couldn\'t generate thumbnails: $e');

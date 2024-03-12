@@ -112,6 +112,7 @@ class _MyAppState extends State<MyApp> {
                             File(e),
                             height: 120,
                             fit: BoxFit.contain,
+                            alignment: AlignmentDirectional.center,
                           ))
                       .toList(),
                 ),

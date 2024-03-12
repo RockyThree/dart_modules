@@ -32,26 +32,32 @@ class VideoThumbnail {
     return await TrimmerPlatform.instance.channel.invokeMethod('file', reqMap);
   }
 
-  static Future<Uint8List?> thumbnailData({
-    required String video,
-    Map<String, String>? headers,
-    ImageFormat imageFormat = ImageFormat.PNG,
-    int maxHeight = 0,
-    int maxWidth = 0,
-    int timeMs = 0,
-    int quality = 10,
+  static Future<Uint8List?> thumbnailWebpData({
+    required String videoPath,
+    int frameIndex = 0,
   }) async {
-    assert(video.isNotEmpty);
+    assert(videoPath.isNotEmpty);
     final reqMap = <String, dynamic>{
-      'video': video,
-      'headers': headers,
-      'format': imageFormat.index,
-      'maxh': maxHeight,
-      'maxw': maxWidth,
-      'timeMs': timeMs,
-      'quality': quality,
+      'videoPath': videoPath,
+      'frameIndex': frameIndex,
     };
-    return await TrimmerPlatform.instance.channel.invokeMethod('data', reqMap);
+    return await TrimmerPlatform.instance.channel.invokeMethod('thumbnailWebpData', reqMap);
+  }
+
+  static Future<int?> getTotalFrames({required String videoPath}) async {
+    assert(videoPath.isNotEmpty);
+    final reqMap = <String, dynamic>{
+      'videoPath': videoPath,
+    };
+    return await TrimmerPlatform.instance.channel.invokeMethod('getTotalFrames', reqMap);
+  }
+
+  static Future<bool?> releaseVideoDecoder({required String videoPath}) async {
+    assert(videoPath.isNotEmpty);
+    final reqMap = <String, dynamic>{
+      'videoPath': videoPath,
+    };
+    return await TrimmerPlatform.instance.channel.invokeMethod('releaseVideoDecoder', reqMap);
   }
 
   static Future<bool> saveFrameToFile({
