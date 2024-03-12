@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:trimmer/trimmer.dart';
 import 'package:path/path.dart' as p;
@@ -31,18 +32,23 @@ class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _trimmerPlugin = Trimmer();
 
+  List<String> imgList = [];
+  late File videoFile;
+  late String tmpPath;
+
   @override
   void initState() {
     super.initState();
     initPlatformState();
 
     () async {
-      var videoFile = await copyAssetToTemporaryFile('assets/Butterfly-209.mp4');
-      VideoThumbnail.saveFrameToFile(
-        videoPath: videoFile.path,
-        frameIndex: 2,
-        frameSavedDirPath: p.join((await getTemporaryDirectory()).path, '45345354345.png'),
-      );
+      videoFile = await copyAssetToTemporaryFile('assets/Butterfly-209.mp4');
+      tmpPath = (await getTemporaryDirectory()).path;
+      // VideoThumbnail.saveFrameToFile(
+      //   videoPath: videoFile.path,
+      //   frameIndex: 2,
+      //   frameSavedDirPath: p.join((await getTemporaryDirectory()).path, '45345354345.png'),
+      // );
       // exit(0);
     }();
   }
@@ -76,7 +82,42 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: Column(
+            children: [
+              Text('Running on: $_platformVersion\n'),
+              TextButton(
+                onPressed: () {
+                  var indexFrame = imgList.length;
+                  var pngPath = p.join(tmpPath, 'test${indexFrame}.png');
+                  VideoThumbnail.saveFrameToFile(
+                    videoPath: videoFile.path,
+                    frameIndex: indexFrame,
+                    frameSavedDirPath: pngPath,
+                  ).then((value) {
+                    imgList.add(pngPath);
+                    setState(() {});
+                  });
+                },
+                child: Text('切帧 ${imgList.length}'),
+              ),
+              Expanded(
+                child: GridView(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5, // number of items in each row
+                    mainAxisSpacing: 1.0, // spacing between rows
+                    crossAxisSpacing: 1.0, // spacing between columns
+                  ),
+                  children: imgList.reversed
+                      .map((e) => Image.file(
+                            File(e),
+                            height: 120,
+                            fit: BoxFit.contain,
+                          ))
+                      .toList(),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
