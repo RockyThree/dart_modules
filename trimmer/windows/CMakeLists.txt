@@ -119,6 +119,7 @@ include_directories("${LIBFFMPEG_SRC}/include")
 # link_directories("${LIBFFMPEG_SRC}/lib")
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
+  "src/utils.cpp"
   "src/trimmer_plugin.cpp"
   "src/trimmer_plugin.h"
   "src/ffmpeg/VideoDecoder.cpp"

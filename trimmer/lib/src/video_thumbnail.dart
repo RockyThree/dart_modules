@@ -32,7 +32,7 @@ class VideoThumbnail {
     return await TrimmerPlatform.instance.channel.invokeMethod('file', reqMap);
   }
 
-  static Future<Uint8List?> thumbnailWebpData({
+  static Future<Uint8List?> thumbnailPNGData({
     required String videoPath,
     int frameIndex = 0,
   }) async {
@@ -41,7 +41,8 @@ class VideoThumbnail {
       'videoPath': videoPath,
       'frameIndex': frameIndex,
     };
-    return await TrimmerPlatform.instance.channel.invokeMethod('thumbnailWebpData', reqMap);
+    var res = await TrimmerPlatform.instance.channel.invokeMethod('thumbnailPNGData', reqMap);
+    return res;
   }
 
   static Future<int?> getTotalFrames({required String videoPath}) async {

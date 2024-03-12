@@ -39,7 +39,7 @@ class ScrollableThumbnailViewer extends StatelessWidget {
     for (int i = 1; i <= numberOfThumbnails; i++) {
       Uint8List? bytes;
       try {
-        bytes = await VideoThumbnail.thumbnailWebpData(
+        bytes = await VideoThumbnail.thumbnailPNGData(
           videoPath: videoPath,
           frameIndex: (eachPart * i).toInt(),
         );
