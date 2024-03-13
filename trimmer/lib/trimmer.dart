@@ -11,6 +11,8 @@ export 'package:trimmer/src/trim_viewer/trim_area_properties.dart';
 // based on the length.
 export 'package:trimmer/src/trim_viewer/trim_viewer.dart';
 
+// export 'package:trimmer/src/trim_viewer/fixed_viewer/fixed_thumbnail_viewer.dart';
+
 export 'package:trimmer/src/trimmer_method_channel.dart';
 export 'package:trimmer/src/trimmer_platform_interface.dart';
 export 'package:trimmer/src/video_thumbnail.dart';

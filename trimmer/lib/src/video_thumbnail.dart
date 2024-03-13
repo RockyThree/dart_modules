@@ -53,6 +53,14 @@ class VideoThumbnail {
     return await TrimmerPlatform.instance.channel.invokeMethod('getTotalFrames', reqMap);
   }
 
+  static Future<int?> getDuration({required String videoPath}) async {
+    assert(videoPath.isNotEmpty);
+    final reqMap = <String, dynamic>{
+      'videoPath': videoPath,
+    };
+    return await TrimmerPlatform.instance.channel.invokeMethod('getDuration', reqMap);
+  }
+
   static Future<bool?> releaseVideoDecoder({required String videoPath}) async {
     assert(videoPath.isNotEmpty);
     final reqMap = <String, dynamic>{
