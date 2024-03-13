@@ -6,6 +6,8 @@ import 'package:trimmer/transparent_image.dart';
 
 import '../../video_thumbnail.dart';
 
+enum SliceType { frame, time }
+
 class FixedThumbnailViewer extends StatelessWidget {
   final File videoFile;
   final int videoDuration;
@@ -14,11 +16,13 @@ class FixedThumbnailViewer extends StatelessWidget {
   final int numberOfThumbnails;
   final VoidCallback onThumbnailLoadingComplete;
   final int quality;
+  final SliceType sliceType;
 
   /// For showing the thumbnails generated from the video,
   /// like a frame by frame preview
   const FixedThumbnailViewer({
     Key? key,
+    this.sliceType = SliceType.frame,
     required this.videoFile,
     required this.videoDuration,
     required this.thumbnailHeight,
@@ -31,12 +35,19 @@ class FixedThumbnailViewer extends StatelessWidget {
   Stream<List<Uint8List?>> generateThumbnail() async* {
     final String videoPath = videoFile.path;
     double eachPart = videoDuration / numberOfThumbnails;
+    if (SliceType.frame == sliceType) {
+      var totalFrames = await VideoThumbnail.getTotalFrames(videoPath: videoPath) ?? 0;
+      print('totalFrames $totalFrames');
+      eachPart = totalFrames / numberOfThumbnails;
+    }
     List<Uint8List?> byteList = [];
     // the cache of last thumbnail
     Uint8List? lastBytes;
     for (int i = 1; i <= numberOfThumbnails; i++) {
       Uint8List? bytes;
       try {
+        int dt = (eachPart * i).toInt();
+        print('dt $dt $eachPart $numberOfThumbnails $videoDuration');
         bytes = await VideoThumbnail.thumbnailPNGData(
           videoPath: videoPath,
           frameIndex: (eachPart * i).toInt(),

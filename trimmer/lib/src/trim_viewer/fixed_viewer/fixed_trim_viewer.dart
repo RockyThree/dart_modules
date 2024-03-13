@@ -285,6 +285,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer> with TickerProviderSt
       });
       videoPlayer.setVolume(1.0);
       _videoDuration = videoPlayer.state.duration.inMilliseconds;
+      print('_videoDuration = videoPlayer.state.duration.inMilliseconds; $_videoDuration');
     }
   }
 
