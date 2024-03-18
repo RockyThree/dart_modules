@@ -32,17 +32,29 @@ class VideoThumbnail {
     return await TrimmerPlatform.instance.channel.invokeMethod('file', reqMap);
   }
 
+  static bool _isProcessing = false;
+  static var _thumbnailLock = Completer();
+
   static Future<Uint8List?> thumbnailPNGData({
     required String videoPath,
     int frameIndex = 0,
   }) async {
-    assert(videoPath.isNotEmpty);
+    if (_isProcessing) {
+      await _thumbnailLock.future;
+    }
+    _isProcessing = true;
     final reqMap = <String, dynamic>{
       'videoPath': videoPath,
       'frameIndex': frameIndex,
     };
-    var res = await TrimmerPlatform.instance.channel.invokeMethod('thumbnailPNGData', reqMap);
-    return res;
+    try {
+      var res = await TrimmerPlatform.instance.channel.invokeMethod('thumbnailPNGData', reqMap);
+      return res;
+    } finally {
+      _isProcessing = false;
+      _thumbnailLock.complete();
+      _thumbnailLock = Completer(); // Reset lock for the next invocation
+    }
   }
 
   static Future<int?> getTotalFrames({required String videoPath}) async {
